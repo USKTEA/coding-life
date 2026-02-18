@@ -1,0 +1,53 @@
+# CodeRabbit Configuration
+# 3-File Pattern 컨텍스트를 활용한 프로젝트 특화 리뷰 실험
+#
+# 이 프로젝트는 .claude/docs/{브랜치이름}/ 에 3개의 계획 문서를 두는 패턴을 사용합니다:
+#   - tasks.md: 프로젝트 목표, 제약조건, 의도적 기술 결정, 해결 완료된 이슈
+#   - findings.md: 기술적 발견사항, 아키텍처 결정 근거, 리뷰 결과
+#   - progress.md: 세션별 작업 내역, 에러 로그, 테스트 결과
+#
+# CodeRabbit은 knowledge_base를 통해 이 문서들을 자동으로 읽고,
+# 프로젝트 맥락에 맞는 리뷰를 수행합니다.
+
+language: "ko"
+
+tone_instructions: "프로젝트의 기술적 결정사항을 존중하되, 결정 근거와 맞지 않는 코드가 있으면 지적하세요."
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  review_status: true
+
+  path_instructions:
+    - path: "**/*"
+      instructions: | 
+        ## 리뷰 컨텍스트: 3-File Pattern
+
+        이 프로젝트는 `.claude/docs/` 하위에 브랜치별 계획 문서를 관리합니다.
+        리뷰 시 반드시 해당 문서들을 참고하여 프로젝트 맥락에 맞는 리뷰를 수행하세요.
+
+        ### 참고해야 할 문서
+        - `tasks.md`: 프로젝트 목표(Goal), 핵심 제약조건, 의도적 기술 결정(Decisions Made)
+        - `findings.md`: 기술적 결정의 근거(Technical Decisions), 해결 완료된 이슈(Issues Encountered), 리뷰 결과(Review Findings)
+        - `progress.md`: 에러 로그, 테스트 결과
+
+        ### 리뷰 원칙
+        1. **의도적 결정 존중**: tasks.md의 "Decisions Made"에 기록된 결정은 근거가 있는 의도적 선택입니다. 이를 뒤집는 제안(예: 다른 라이브러리 도입)은 하지 마세요.
+        2. **해결 완료 이슈 인지**: findings.md의 "Issues Encountered"에 기록된 이슈는 이미 해결되었습니다. 동일 이슈를 재발견한 경우에만 코멘트하세요.
+        3. **제약조건 기반 리뷰**: tasks.md의 제약조건(예: 외부 의존성 금지, 특정 플랫폼 한정)에 위배되는 코드를 집중적으로 검토하세요.
+        4. **리뷰 결과 반영**: findings.md의 "Review Findings"에 이미 검토된 관점은 중복 지적을 피하고, 새로운 관점에 집중하세요.
+
+        ### 집중해야 할 관점
+        - 기록된 제약조건에 위배되는 코드가 있는가?
+        - 의도적 결정의 근거에 맞지 않는 구현이 있는가?
+        - 이미 해결된 이슈가 재발하고 있지 않은가?
+        - tasks.md에 기록된 에러 패턴이 반복되고 있지 않은가?
+
+# 프로젝트 컨텍스트 문서 참조
+# glob 패턴으로 모든 브랜치의 3-File Pattern 문서를 자동 인식
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "CLAUDE.md"
+      - ".claude/docs/**/*.md"
