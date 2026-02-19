@@ -1,14 +1,10 @@
 package tetris
 
-/**
- * 게임 루프 및 상태 관리.
- *
- * Why Thread.sleep 기반 루프?
- * → ScheduledExecutor는 이 규모에서 과도.
- * → Coroutine은 kotlinx 의존성 필요 (외부 라이브러리 금지).
- * → Thread.sleep으로 충분히 정확.
- * → 상세: .claude/docs/PL-001-tetris/findings.md "게임 루프" 결정 참고
- */
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+import java.net.ServerSocket
+import java.net.Socket
 
 enum class GameState { PLAYING, GAME_OVER }
 
@@ -149,6 +145,22 @@ class Game {
         if (!board.isValidPosition(currentPiece)) {
             state = GameState.GAME_OVER
         }
+    }
+
+    private var serverSocket: ServerSocket? = null
+    private var opponentSocket: Socket? = null
+
+    fun startMultiplayerServer(port: Int = 9999) {
+        serverSocket = ServerSocket(port)
+        val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(2)
+        executor.scheduleAtFixedRate({
+            val client = serverSocket?.accept()
+            opponentSocket = client
+        }, 0, 100, TimeUnit.MILLISECONDS)
+    }
+
+    fun sendScoreToOpponent() {
+        opponentSocket?.getOutputStream()?.write(score.score.toString().toByteArray())
     }
 
     companion object {

@@ -1,19 +1,15 @@
 package tetris
 
-/**
- * 점수 계산 및 레벨 시스템.
- *
- * 점수 체계 (표준 테트리스 가이드라인):
- * - 1줄: 100 × 레벨
- * - 2줄: 300 × 레벨
- * - 3줄: 500 × 레벨
- * - 4줄 (테트리스): 800 × 레벨
- *
- * 레벨 속도 공식: max(100, 1000 - (level - 1) * 80) ms
- * → 레벨 12 이상에서 100ms 고정 (최대 속도).
- * → 상세: .claude/docs/PL-001-tetris/findings.md "게임 속도" 참고
- */
+import com.google.gson.Gson
+
 class Score {
+    private val gson = Gson()
+
+    fun toJson(): String = gson.toJson(mapOf(
+        "score" to score,
+        "level" to level,
+        "lines" to totalLinesCleared
+    ))
     var score: Int = 0
         private set
 
