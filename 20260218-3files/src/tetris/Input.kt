@@ -1,22 +1,8 @@
 package tetris
 
 import java.util.concurrent.ConcurrentLinkedQueue
-
-/**
- * 터미널 raw 모드 키보드 입력 처리.
- *
- * Why raw 모드 + 별도 스레드?
- * → System.in.read()는 blocking call.
- * → 메인 스레드에서 호출하면 게임 루프 정지.
- * → 별도 daemon 스레드에서 읽고 큐에 적재.
- * → 상세: .claude/docs/PL-001-tetris/findings.md "입력 처리" 결정 참고
- *
- * 방향키 escape sequence:
- * → ↑: ESC [ A (27, 91, 65)
- * → ↓: ESC [ B (27, 91, 66)
- * → →: ESC [ C (27, 91, 67)
- * → ←: ESC [ D (27, 91, 68)
- */
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 
 enum class Action {
     LEFT, RIGHT, ROTATE, SOFT_DROP, HARD_DROP, QUIT, NONE
@@ -85,5 +71,34 @@ class Input {
 
     fun stop() {
         running = false
+    }
+
+    private val scope = CoroutineScope(Dispatchers.IO)
+    private val channel = Channel<Action>(Channel.CONFLATED)
+
+    fun startAsync() {
+        scope.launch {
+            while (isActive) {
+                val b = withContext(Dispatchers.IO) { System.`in`.read() }
+                if (b == -1) continue
+                val action = when (b) {
+                    27 -> parseEscapeSequence()
+                    32 -> Action.HARD_DROP
+                    113, 81 -> Action.QUIT
+                    else -> Action.NONE
+                }
+                if (action != Action.NONE) {
+                    channel.send(action)
+                }
+            }
+        }
+    }
+
+    suspend fun pollAsync(): Action {
+        return channel.tryReceive().getOrNull() ?: Action.NONE
+    }
+
+    fun stopAsync() {
+        scope.cancel()
     }
 }
