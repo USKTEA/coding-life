@@ -1,0 +1,81 @@
+# CodeRabbit Configuration
+# 3-File Pattern 컨텍스트를 활용한 프로젝트 특화 리뷰 실험
+#
+# 중요: 이 파일은 반드시 레포 루트에 위치해야 CodeRabbit이 인식합니다.
+# path_instructions의 경로는 레포 루트 기준입니다.
+
+language: "ko"
+
+tone_instructions: "모든 리뷰 코멘트를 반드시 한국어로 작성하세요. 프로젝트의 의도적 기술 결정을 존중하되, 결정 근거와 맞지 않는 코드가 있으면 지적하세요."
+
+reviews:
+  profile: "assertive"
+  high_level_summary: true
+  high_level_summary_placeholder: "@coderabbit"
+  review_status: true
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_instructions:
+    - path: "20260218-3files/src/tetris/**/*.kt"
+      instructions: |
+        ## 프로젝트 컨텍스트 (3-File Pattern에서 추출)
+
+        이 프로젝트는 **외부 의존성 없이 순수 Kotlin으로 만든 콘솔 테트리스**입니다.
+        아래는 사전에 검토 완료된 의도적 기술 결정이므로, 이를 뒤집는 제안은 하지 마세요.
+
+        ### 의도적 기술 결정 (Decisions Made)
+        | 결정 | 근거 |
+        |------|------|
+        | SRS 회전 시스템 | 단순 회전은 벽 근처 UX 나쁨. SRS + 월킥이 표준이고 구현 비용 낮음 |
+        | ANSI escape code 렌더링 | 외부 의존성 금지 조건. ncurses 등 불가 |
+        | 더블 버퍼링 | 매 프레임 전체 다시 그리면 깜빡임 심함. 변경 셀만 업데이트 |
+        | Thread.sleep 게임 루프 | ScheduledExecutor는 이 규모에서 과도. Coroutine은 kotlinx 의존성 필요 |
+        | 별도 스레드 키보드 입력 | System.in.read()는 blocking. 메인 스레드에서 호출하면 게임 루프 정지 |
+        | 네트워크 대전 미구현 | YAGNI. 싱글 플레이어로 충분 |
+
+        ### 제약조건
+        - **외부 라이브러리 절대 금지** (순수 Kotlin 표준 라이브러리만)
+        - macOS/Linux 전용 (Windows 미지원)
+        - kotlinx.coroutines 등 별도 의존성 도입 제안 금지
+
+        ### 해결 완료된 이슈 (재발견 시에만 코멘트)
+        - 회전 시 ArrayIndexOutOfBounds → 월킥 오프셋 테이블로 해결
+        - 라인 클리어 후 위 블록 안 내려옴 → 위→아래 순서 행 이동으로 해결
+        - 터미널 raw 모드 복원 안 됨 → shutdown hook 추가로 해결
+        - 렌더링 깜빡임 → 더블 버퍼링 + StringBuilder 일괄 flush로 해결
+        - 하드 드롭 후 다음 피스 지연 → 같은 프레임 내 lock→클리어→spawn으로 해결
+
+        ### 이미 검토 완료된 사항 (중복 지적 금지)
+        - 목적 부합: 7종 피스, 회전, 클리어, 점수 모두 정상
+        - 배열 범위 검증: require() 추가 완료
+        - 터미널 복원: shutdown hook 추가 완료
+        - 디버그 코드 제거: printBoard() 제거 완료
+        - 매직 넘버: WIDTH, HEIGHT 상수 추출 완료
+
+        ### 리뷰 집중 관점
+        - 제약조건(순수 Kotlin, 외부 의존성 금지)에 위배되는 코드가 있는가?
+        - 의도적 결정의 근거에 맞지 않는 구현이 있는가?
+        - 해결 완료된 이슈가 재발하고 있지 않는가?
+        - 기록된 에러 패턴이 반복되고 있지 않는가?
+
+    - path: "20260218-3files/CLAUDE.md"
+      instructions: "이 파일은 AI 에이전트 워크플로우 정의입니다. 내용의 정확성과 명확성을 검토하세요."
+
+    - path: "20260218-3files/.claude/docs/**/*.md"
+      instructions: "이 파일들은 3-File Pattern 계획 문서입니다. 내용의 일관성과 최신성을 검토하세요."
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "20260218-3files/CLAUDE.md"
+      - "20260218-3files/.claude/docs/**/*.md"
